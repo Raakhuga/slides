@@ -1,15 +1,8 @@
-import React from 'react';
+import React, { useRef } from 'react';
 import fontStyles from '../styles/FontStyles';
 import colorStyles from '../styles/ColorStyles';
-import {
-  Dimensions,
-  SafeAreaView,
-  StyleSheet,
-  Text,
-  Image,
-  View,
-  TouchableOpacity,
-} from 'react-native';
+import Reanimated, { withSpring, useSharedValue, useAnimatedStyle } from 'react-native-reanimated';
+import { Dimensions, StyleSheet, Text, Image, View, TouchableOpacity } from 'react-native';
 
 const Slides = () => {
     
@@ -19,41 +12,103 @@ const Slides = () => {
         require('../assets/Welcome3.png')
     ];
 
+    const currentSlide = useRef(0);
+
+    const selectedPos = useSharedValue(0);
+    const oval1Pos = useSharedValue(0);
+    const oval2Pos = useSharedValue(0);
+
+    const selectedPositions: number[] = [0, 14, 28];
+    const oval1Positions: number[] = [32, 0, 0];
+    const oval2Positions: number[] = [46, 46, 14];
+
+    const selectedAnimation = useAnimatedStyle(() => {
+        return {
+            left: selectedPos.value,
+        };
+    });
+
+    const oval1Animation = useAnimatedStyle(() => {
+        return {
+            left: oval1Pos.value,
+        };
+    });
+
+    const oval2Animation = useAnimatedStyle(() => {
+        return {
+            left: oval2Pos.value,
+        };
+    });
+    
+    const click = () => {
+        let old = currentSlide.current
+        currentSlide.current = currentSlide.current == 2 ? 0 : currentSlide.current+1;
+        selectedPos.value = withSpring(selectedPositions[currentSlide.current], {
+            damping: 13,
+            mass: 1,
+            stiffness: 100
+        });
+        if (oval1Positions[old] != oval1Positions[currentSlide.current]) oval1Pos.value = withSpring(oval1Positions[currentSlide.current], {
+            damping: 13,
+            mass: 1,
+            stiffness: 100
+        });
+        if (oval2Positions[old] != oval2Positions[currentSlide.current]) oval2Pos.value = withSpring(oval2Positions[currentSlide.current], {
+            damping: 13,
+            mass: 1,
+            stiffness: 100
+        });
+    }
+
     return (
         <View>
             <Image 
                 style={styles.backgroundImage}
                 source={images[0]}
             />
-            <View style={[styles.content]}>
+            <View style={[
+                styles.content,
+                {borderColor: 'red', borderWidth: 1}]}>
                 <Text style={[
                     fontStyles.title1,
                     fontStyles.medium,
                     colorStyles.whiteOpacity100,
                     styles.title,
+                    {borderColor: 'red', borderWidth: 1}
                 ]}>Scan Products</Text>
                 <Text style={[
                     styles.subtitle,
                     fontStyles.title3,
-                    colorStyles.whiteOpacity60,
-                ]}>to make better choices for you and the planet</Text>
+                    colorStyles.whiteOpacity60,                    
+                    {borderColor: 'red', borderWidth: 1}
+                ]}>to make better choices for you and the planet {currentSlide.current}</Text>
             </View>
             <View style={[
                 styles.components,
             ]}>
-                <View style={[
+                <Reanimated.View style={[
                     styles.selected,
+                    selectedAnimation,
                     {backgroundColor: 'rgba(255, 255, 255, 1)'},
                 ]}/>
-                <View style={[
+                <Reanimated.View style={[
                     styles.oval,
-                    {backgroundColor: 'rgba(255, 255, 255, 0.6)', left: 32},
+                    {backgroundColor: 'rgba(255, 255, 255, 0.6)'},
+                    oval1Animation
                 ]}/>
-                <View style={[
+                <Reanimated.View style={[
                     styles.oval,
-                    {backgroundColor: 'rgba(255, 255, 255, 0.6)', left: 46},
+                    {backgroundColor: 'rgba(255, 255, 255, 0.6)'},
+                    oval2Animation
                 ]}/>
             </View>
+            <TouchableOpacity style={{
+                position:'absolute',
+                width: 30, 
+                height: 30, 
+                alignSelf: 'center',
+                backgroundColor: 'red'
+            }} onPress={click}/>
         </View>
     );
 };

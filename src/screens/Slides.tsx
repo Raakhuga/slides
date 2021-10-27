@@ -1,14 +1,17 @@
-import React, { useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import fontStyles from '../styles/FontStyles';
-import colorStyles from '../styles/ColorStyles';
-import Reanimated, { withSpring, useSharedValue, useAnimatedStyle, withTiming, withDelay, Easing, useAnimatedGestureHandler } from 'react-native-reanimated';
-import { Dimensions, StyleSheet, Text, Image, ImageBackground, View, TouchableOpacity, StatusBar } from 'react-native';
+import colors from '../styles/Colors';
+import Reanimated, { withSpring, useSharedValue, useAnimatedStyle, withTiming, withDelay, Easing, SharedValue} from 'react-native-reanimated';
+import { Dimensions, StyleSheet, View, StatusBar } from 'react-native';
 import GestureRecognizer from 'react-native-swipe-gestures';
+
 
 const Slides = () => {
 
+    // Iterator to keep track of the slide that's currently showing
     const currentSlide = useRef(0);
 
+    // Data of all the slides and variables used for animating its components
     const slides = [
         {
             image: {
@@ -63,7 +66,9 @@ const Slides = () => {
         }
     ];
 
+    // Variable to animate the selected component
     const selectedPos = useSharedValue(0);
+    // Variables to animate the ovals of the pagination component
     const ovals = [
         {
             orig: 32,
@@ -75,16 +80,20 @@ const Slides = () => {
         }
     ]
 
+    // Animation of the selected component
     const selectedAnimation = useAnimatedStyle(() => {
         return {
             left: selectedPos.value,
         };
     });
 
+    // Function to change the images with its corresponding animation
     const changeImage = (old: number, act: number) => {
+        
         slides[old].image.alpha.value = withTiming(0, {duration:400});
         slides[act].image.alpha.value =  withTiming(1, {duration:400});
-        if (act > old) {
+        
+        if (act > old) { // Detect the direction of the movement
             slides[old].image.scale.value = withTiming(1.1, {duration:400});
             slides[act].image.scale.value = 1;
         } else {
@@ -93,18 +102,21 @@ const Slides = () => {
         }
     }
 
+    // Spring animation settings for the pagination components
     const paginationSpring =  {
         damping: 13,
         mass: 1,
         stiffness: 100
     }
 
+    // Funciton to move the selected component of the pagination component
     const moveSelected = (act: number) => {
         selectedPos.value = withSpring(act * 14, paginationSpring);
     }
 
+    // Function to move the ovals of the pagination component right to left
     const nextPagination = (old: number, act: number) => {
-        if (act > old) {
+        if (act > old) { 
             ovals[act-1].pos.value = withSpring(ovals[act-1].orig - 32, paginationSpring);
         } else {
             ovals.forEach((oval) => {
@@ -113,6 +125,7 @@ const Slides = () => {
         }
     }
 
+    // Function to move the ovals of the pagination component left to right
     const prevPagination = (old: number, act: number) => {
         if (act < old) {
             ovals[act].pos.value = withSpring(ovals[act].orig, paginationSpring);
@@ -123,7 +136,9 @@ const Slides = () => {
         }
     }
 
+    // Function to animate the movement of the text
     const moveText = (old: number, act: number) => {
+        // Settings for the animations
         const textOutDuration = 160;
         const textOutOpacityDuration = 100;
 
@@ -138,6 +153,7 @@ const Slides = () => {
         let direction: number = 1;
         if (act < old) direction = -1
 
+        // Moving the title and subtitle that are going to desappear
         slides[old].title.x.value = withTiming(direction * -Dimensions.get('window').width, {
             easing: Easing.inOut(Easing.linear),
             duration: textOutDuration   
@@ -156,8 +172,11 @@ const Slides = () => {
             duration: textOutOpacityDuration
         });
         
+        // Setting the initial position of the title and subtitle that are going to appear
         slides[act].title.x.value = direction * Dimensions.get('window').width;
         slides[act].subtitle.x.value = direction * Dimensions.get('window').width;
+
+        // Bringing the title and subtitle that are going to appear to the center and showing them
         slides[act].title.x.value = withSpring(0, textInSpring);
         slides[act].subtitle.x.value = withDelay(subtitleInDelay,withSpring(0, textInSpring));
         slides[act].title.alpha.value = withTiming(1, {
@@ -170,6 +189,7 @@ const Slides = () => {
         }));
     }
     
+    // Function to call all the needed animations to move slides right to left
     const nextSlide = () => {
         let old = currentSlide.current;
         currentSlide.current = currentSlide.current == slides.length-1 ? 0 : currentSlide.current+1;
@@ -179,6 +199,7 @@ const Slides = () => {
         changeImage(old, currentSlide.current);
     }
    
+    // Function to call all the needed animations to move slides left to right
     const prevSlide = () => {
         let old = currentSlide.current;
         currentSlide.current = currentSlide.current == 0 ? slides.length-1 : currentSlide.current-1;
@@ -188,6 +209,7 @@ const Slides = () => {
         changeImage(old, currentSlide.current);
     }
 
+    // Configuration of the gesture recognizer
     const config = {
         velocityThreshold: 0.3,
         directionalOffsetThreshold: 80
@@ -226,7 +248,6 @@ const Slides = () => {
                                 style={[
                                     fontStyles.title1,
                                     fontStyles.medium,
-                                    colorStyles.whiteOpacity100,
                                     styles.title,
                                     useAnimatedStyle(() => {
                                         return {
@@ -241,7 +262,6 @@ const Slides = () => {
                                 style={[
                                     styles.subtitle,
                                     fontStyles.title3,
-                                    colorStyles.whiteOpacity60,
                                     useAnimatedStyle(() => {
                                         return {
                                             transform: [{translateX: slides[index].subtitle.x.value}],
@@ -259,7 +279,6 @@ const Slides = () => {
                     <Reanimated.View style={[
                         styles.selected,
                         selectedAnimation,
-                        {backgroundColor: 'rgba(255, 255, 255, 1)'},
                     ]}/>
                     {ovals.map((_, index) => {
                         return (
@@ -267,7 +286,6 @@ const Slides = () => {
                                 key={`oval_${index}`} 
                                 style={[
                                     styles.oval,
-                                    {backgroundColor: 'rgba(255, 255, 255, 0.6)'},
                                     useAnimatedStyle(() => {
                                         return {
                                             left: ovals[index].pos.value
@@ -309,12 +327,14 @@ const styles = StyleSheet.create({
     title: {
         flex: 0,
         height: 39,
-        textAlign: 'center'
+        textAlign: 'center',
+        color: colors.whiteOpacity100
     },
     subtitle: {
         flex: 0,
         height: 56,
-        textAlign: 'center'
+        textAlign: 'center',
+        color: colors.whiteOpacity60
     },
     components: {
         position: 'absolute',
@@ -332,7 +352,8 @@ const styles = StyleSheet.create({
         width: 6,
         height: 6,
         borderRadius: 3,
-        marginHorizontal: 4
+        marginHorizontal: 4,
+        backgroundColor: colors.whiteOpacity60
     },
     selected: {
         position: 'absolute',
@@ -340,7 +361,8 @@ const styles = StyleSheet.create({
         width: 24,
         height: 6,
         borderRadius: 3,
-        marginHorizontal: 4
+        marginHorizontal: 4,
+        backgroundColor: colors.whiteOpacity100
     }
 });
 

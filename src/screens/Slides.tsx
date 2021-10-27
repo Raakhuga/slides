@@ -1,34 +1,57 @@
 import React, { useRef } from 'react';
 import fontStyles from '../styles/FontStyles';
 import colorStyles from '../styles/ColorStyles';
-import Reanimated, { withSpring, useSharedValue, useAnimatedStyle } from 'react-native-reanimated';
+import Reanimated, { withSpring, useSharedValue, useAnimatedStyle, withTiming, withDelay, Easing } from 'react-native-reanimated';
 import { Dimensions, StyleSheet, Text, Image, View, TouchableOpacity } from 'react-native';
 
 const Slides = () => {
-    
-    const images = [
-        require('../assets/Welcome1.png'),
-        require('../assets/Welcome2.png'),
-        require('../assets/Welcome3.png')
-    ];
-
     const currentSlide = useRef(0);
 
     const slides = [
         {
             image: require('../assets/Welcome1.png'),
-            title: 'Scan Products',
-            subtitle: 'to make better choices for you and the planet'
+            alpha: useSharedValue(1),
+            scale: useSharedValue(1),
+            title: {
+                text: 'Scan Products',
+                x: useSharedValue(0),
+                alpha: useSharedValue(1),
+            },
+            subtitle: {
+                text:'to make better choices for you and the planet',
+                x: useSharedValue(0),
+                alpha: useSharedValue(1),
+            }
         },
         {
             image: require('../assets/Welcome2.png'),
-            title: 'Learn from experts',
-            subtitle: 'through  free and high-level contents in your feed'
+            alpha: useSharedValue(0),
+            scale: useSharedValue(0.9),
+            title: {
+                text: 'Learn from experts',
+                x: useSharedValue(Dimensions.get('window').width),
+                alpha: useSharedValue(0),
+            },
+            subtitle: {
+                text:'through  free and high-level contents in your feed',
+                x: useSharedValue(Dimensions.get('window').width),
+                alpha: useSharedValue(0),
+            }
         },
         {
             image: require('../assets/Welcome3.png'),
-            title: 'Save the planet',
-            subtitle: 'while living a sustainable and healthy lifestyle'
+            alpha: useSharedValue(0),
+            scale: useSharedValue(0.9),
+            title: {
+                text: 'Save the planet',
+                x: useSharedValue(Dimensions.get('window').width),
+                alpha: useSharedValue(0),
+            },
+            subtitle: {
+                text:'while living a sustainable and healthy lifestyle',
+                x: useSharedValue(Dimensions.get('window').width),
+                alpha: useSharedValue(0),
+            }
         }
     ];
 
@@ -50,17 +73,24 @@ const Slides = () => {
         };
     });
 
-    
-    const nextSlide = () => {
-        let old = currentSlide.current
-        currentSlide.current = currentSlide.current == slides.length-1 ? 0 : currentSlide.current+1;
-        selectedPos.value = withSpring(currentSlide.current * 14, {
+    const changeImage = (old: number, act: number) => {
+        slides[old].alpha.value = withTiming(0, {duration:400})
+        slides[old].scale.value = withTiming(0.9, {duration:400})
+        slides[act].alpha.value = withDelay(400, withTiming(1, {duration:400}))
+        slides[act].scale.value = withDelay(400, withTiming(1, {duration:400}))
+    }
+
+    const moveSelected = (act: number) => {
+        selectedPos.value = withSpring(act * 14, {
             damping: 13,
             mass: 1,
             stiffness: 100
         });
-        if (currentSlide.current > old) {
-            ovals[currentSlide.current-1].pos.value = withSpring(ovals[currentSlide.current-1].orig - 32, {
+    }
+
+    const nextPagination = (old: number, act: number) => {
+        if (act > old) {
+            ovals[act-1].pos.value = withSpring(ovals[act-1].orig - 32, {
                 damping: 13,
                 mass: 1,
                 stiffness: 100
@@ -76,29 +106,133 @@ const Slides = () => {
         }
     }
 
+    const nextText = (old: number, act: number) => {
+        if (act > old) {
+
+            slides[old].title.x.value = withTiming(-Dimensions.get('window').width, {
+                easing: Easing.inOut(Easing.exp),
+                duration: 400
+            });
+            slides[old].subtitle.x.value = withTiming(-Dimensions.get('window').width, {
+                easing: Easing.inOut(Easing.exp),
+                duration: 400
+            });
+            slides[old].title.alpha.value = withTiming(0, {duration: 300});
+            slides[old].subtitle.alpha.value = withTiming(0, {duration: 300});
+            
+            slides[act].title.x.value = Dimensions.get('window').width;
+            slides[act].subtitle.x.value = Dimensions.get('window').width;
+
+            slides[act].title.x.value = withSpring(0, {
+                damping: 13,
+                mass: 1,
+                stiffness: 100
+            });
+            slides[act].subtitle.x.value = withDelay(4, withSpring(0, {
+                damping: 13,
+                mass: 1,
+                stiffness: 100
+            }));
+            slides[act].title.alpha.value = withTiming(1, {duration: 300})
+            slides[act].subtitle.alpha.value = withDelay(4, withTiming(1, {duration: 300}))
+
+        } else {
+
+            slides[old].title.x.value = withTiming(Dimensions.get('window').width, {
+                easing: Easing.inOut(Easing.exp),
+                duration: 400
+            });
+            slides[old].subtitle.x.value = withTiming(Dimensions.get('window').width, {
+                easing: Easing.inOut(Easing.exp),
+                duration: 400
+            });
+            slides[old].title.alpha.value = withTiming(0, {duration: 300});
+            slides[old].subtitle.alpha.value = withTiming(0, {duration: 300});
+
+            slides[act].title.x.value = -Dimensions.get('window').width;
+            slides[act].subtitle.x.value = -Dimensions.get('window').width;
+            slides[act].title.x.value = withSpring(0, {
+                damping: 13,
+                mass: 1,
+                stiffness: 100
+            });
+            slides[act].subtitle.x.value = withDelay(4,withSpring(0, {
+                damping: 13,
+                mass: 1,
+                stiffness: 100
+            }));
+            slides[act].title.alpha.value = withTiming(1, {duration: 300})
+            slides[act].subtitle.alpha.value = withDelay(4, withTiming(1, {duration: 300}))
+        }
+    }
+    
+    const nextSlide = () => {
+        let old = currentSlide.current;
+        currentSlide.current = currentSlide.current == slides.length-1 ? 0 : currentSlide.current+1;
+        moveSelected(currentSlide.current);
+        nextPagination(old, currentSlide.current);
+        nextText(old, currentSlide.current);
+        changeImage(old, currentSlide.current);
+    }
+
     const click = () => {
         nextSlide();
     }
-
+   
     return (
-        <View>
-            <Image 
-                style={styles.backgroundImage}
-                source={images[0]}
-            />
-            <View style={styles.content}>
-                <Text style={[
-                    fontStyles.title1,
-                    fontStyles.medium,
-                    colorStyles.whiteOpacity100,
-                    styles.title,
-                ]}>Scan Products</Text>
-                <Text style={[
-                    styles.subtitle,
-                    fontStyles.title3,
-                    colorStyles.whiteOpacity60,
-                ]}>to make better choices for you and the planet</Text>
-            </View>
+        <View style={{position:'absolute', width: '100%', height: '100%', backgroundColor: 'rgb(0, 0, 0)'}}>
+            {slides.map((_, index) => {
+                return (
+                    <Reanimated.Image
+                        key={`bg_${index}`}
+                        style={[
+                            styles.backgroundImage,
+                            useAnimatedStyle(() => {
+                                return {
+                                    opacity: slides[index].alpha.value,
+                                    transform: [{scale: slides[index].scale.value}]
+                                }
+                            })
+                        ]}
+                        source={slides[index].image}
+                    />
+                );
+            })}
+            {slides.map((_, index) => {
+                return (
+                    <View style={styles.content} key={`content_${index}`}>
+                        <Reanimated.Text
+                            key={`title_${index}`}
+                            style={[
+                                fontStyles.title1,
+                                fontStyles.medium,
+                                colorStyles.whiteOpacity100,
+                                styles.title,
+                                useAnimatedStyle(() => {
+                                    return {
+                                        transform: [{translateX: slides[index].title.x.value}],
+                                        opacity: slides[index].title.alpha.value,
+                                    }
+                                })
+                            ]}
+                        >{slides[index].title.text}</Reanimated.Text>
+                        <Reanimated.Text
+                            key={`subtitle_${index}`}
+                            style={[
+                                styles.subtitle,
+                                fontStyles.title3,
+                                colorStyles.whiteOpacity60,
+                                useAnimatedStyle(() => {
+                                    return {
+                                        transform: [{translateX: slides[index].subtitle.x.value}],
+                                        opacity: slides[index].subtitle.alpha.value,
+                                    }
+                                })
+                            ]}
+                        >{slides[index].subtitle.text}</Reanimated.Text>
+                    </View>
+                )
+            })}
             <View style={[
                 styles.components,
             ]}>
@@ -129,7 +263,8 @@ const Slides = () => {
                 width: 30, 
                 height: 30, 
                 alignSelf: 'center',
-                backgroundColor: 'red'
+                backgroundColor: 'red',
+                zIndex: 10
             }} onPress={click}/>
         </View>
     );
@@ -137,10 +272,11 @@ const Slides = () => {
 
 const styles = StyleSheet.create({
     backgroundImage: {
-        position: 'relative',
+        position: 'absolute',
         width: '100%',
         height: '100%',
-        resizeMode: 'contain'
+        resizeMode: 'contain',
+        opacity: 0.5
     },
     content: {
         position: 'absolute',

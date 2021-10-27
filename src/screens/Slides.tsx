@@ -14,13 +14,35 @@ const Slides = () => {
 
     const currentSlide = useRef(0);
 
-    const selectedPos = useSharedValue(0);
-    const oval1Pos = useSharedValue(0);
-    const oval2Pos = useSharedValue(0);
+    const slides = [
+        {
+            image: require('../assets/Welcome1.png'),
+            title: 'Scan Products',
+            subtitle: 'to make better choices for you and the planet'
+        },
+        {
+            image: require('../assets/Welcome2.png'),
+            title: 'Learn from experts',
+            subtitle: 'through  free and high-level contents in your feed'
+        },
+        {
+            image: require('../assets/Welcome3.png'),
+            title: 'Save the planet',
+            subtitle: 'while living a sustainable and healthy lifestyle'
+        }
+    ];
 
-    const selectedPositions: number[] = [0, 14, 28];
-    const oval1Positions: number[] = [32, 0, 0];
-    const oval2Positions: number[] = [46, 46, 14];
+    const selectedPos = useSharedValue(0);
+    const ovals = [
+        {
+            orig: 32,
+            pos: useSharedValue(32),
+        },
+        {
+            orig: 46,
+            pos: useSharedValue(46),
+        }
+    ]
 
     const selectedAnimation = useAnimatedStyle(() => {
         return {
@@ -28,36 +50,34 @@ const Slides = () => {
         };
     });
 
-    const oval1Animation = useAnimatedStyle(() => {
-        return {
-            left: oval1Pos.value,
-        };
-    });
-
-    const oval2Animation = useAnimatedStyle(() => {
-        return {
-            left: oval2Pos.value,
-        };
-    });
     
-    const click = () => {
+    const nextSlide = () => {
         let old = currentSlide.current
-        currentSlide.current = currentSlide.current == 2 ? 0 : currentSlide.current+1;
-        selectedPos.value = withSpring(selectedPositions[currentSlide.current], {
+        currentSlide.current = currentSlide.current == slides.length-1 ? 0 : currentSlide.current+1;
+        selectedPos.value = withSpring(currentSlide.current * 14, {
             damping: 13,
             mass: 1,
             stiffness: 100
         });
-        if (oval1Positions[old] != oval1Positions[currentSlide.current]) oval1Pos.value = withSpring(oval1Positions[currentSlide.current], {
-            damping: 13,
-            mass: 1,
-            stiffness: 100
-        });
-        if (oval2Positions[old] != oval2Positions[currentSlide.current]) oval2Pos.value = withSpring(oval2Positions[currentSlide.current], {
-            damping: 13,
-            mass: 1,
-            stiffness: 100
-        });
+        if (currentSlide.current > old) {
+            ovals[currentSlide.current-1].pos.value = withSpring(ovals[currentSlide.current-1].orig - 32, {
+                damping: 13,
+                mass: 1,
+                stiffness: 100
+            });
+        } else {
+            ovals.forEach((oval) => {
+                oval.pos.value = withSpring(oval.orig, {
+                    damping: 13,
+                    mass: 1,
+                    stiffness: 100
+                })
+            })
+        }
+    }
+
+    const click = () => {
+        nextSlide();
     }
 
     return (
@@ -66,22 +86,18 @@ const Slides = () => {
                 style={styles.backgroundImage}
                 source={images[0]}
             />
-            <View style={[
-                styles.content,
-                {borderColor: 'red', borderWidth: 1}]}>
+            <View style={styles.content}>
                 <Text style={[
                     fontStyles.title1,
                     fontStyles.medium,
                     colorStyles.whiteOpacity100,
                     styles.title,
-                    {borderColor: 'red', borderWidth: 1}
                 ]}>Scan Products</Text>
                 <Text style={[
                     styles.subtitle,
                     fontStyles.title3,
-                    colorStyles.whiteOpacity60,                    
-                    {borderColor: 'red', borderWidth: 1}
-                ]}>to make better choices for you and the planet {currentSlide.current}</Text>
+                    colorStyles.whiteOpacity60,
+                ]}>to make better choices for you and the planet</Text>
             </View>
             <View style={[
                 styles.components,
@@ -91,16 +107,22 @@ const Slides = () => {
                     selectedAnimation,
                     {backgroundColor: 'rgba(255, 255, 255, 1)'},
                 ]}/>
-                <Reanimated.View style={[
-                    styles.oval,
-                    {backgroundColor: 'rgba(255, 255, 255, 0.6)'},
-                    oval1Animation
-                ]}/>
-                <Reanimated.View style={[
-                    styles.oval,
-                    {backgroundColor: 'rgba(255, 255, 255, 0.6)'},
-                    oval2Animation
-                ]}/>
+                {ovals.map((_, index) => {
+                    return (
+                        <Reanimated.View
+                            key={`oval_${index}`} 
+                            style={[
+                                styles.oval,
+                                {backgroundColor: 'rgba(255, 255, 255, 0.6)'},
+                                useAnimatedStyle(() => {
+                                    return {
+                                        left: ovals[index].pos.value
+                                    }
+                                })
+                            ]}
+                        />
+                    )
+                })}
             </View>
             <TouchableOpacity style={{
                 position:'absolute',
